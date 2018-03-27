@@ -12,6 +12,7 @@ redis_conn = redis_handler()
 mongo_conn = mongo_handler()
 esrtf_conn = esrtf_handler()
 def update_service():
+	'''3.28微博框架'''
 	'update redis and clawer status'
 	redis_list = redis_conn.update()
 	for i in range(len(redis_list)):
