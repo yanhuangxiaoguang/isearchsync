@@ -1,18 +1,15 @@
 # encoding: utf-8
 import time, datetime
 import pymysql as mydb
-#import conf
-from sync import conf
-
+import conf
 class mysql_handler:
 	def __init__(self):
 		self.user, self.password, self.db, self.host, self.port, self.type = conf.mysql_init()
 		self.conn = None
 		self.cursor = None
 		try:
-			self.conn = mydb.connect(host=self.host, user=self.user, passwd=self.password, db=self.db, port=self.port,cursorclass=mydb.cursors.DictCursor, charset='utf8')
+			self.conn = mydb.connect(host=self.host, user=self.user, passwd=self.password, db=self.db, port=self.port, charset='utf8', cursorclass=mydb.cursors.DictCursor)
 			'''self.cursor = connect.cursor() tuple'''
-			#self.cursor = self.conn.cursor(cursorclass=)
 			self.cursor = self.conn.cursor()
 			#self.cursor.execute('SET NAMES utf8mb4')
 			#self.cursor.execute("SET CHARACTER SET utf8mb4")
@@ -109,9 +106,13 @@ class mysql_handler:
 		self.__insert_sql(sql)
 	def insert_re_topic(self, web_id, topic_id, pub_date, user_id):
 		sql = 'insert into re_web_topic (web_id, topic_id, crawl_date, user_id) values(%d, %d, "%s", %d)' % (web_id, topic_id, pub_date, user_id)
-		#table crawl_date -> pub_date
-		#print sql
 		self.__insert_sql(sql)
+	def insert_weibo_user(self, dict_weibo_users):
+		for dict_user in dict_weibo_users:
+			if not dict_user.has_key('BriefIntroduction'):
+				dict_user['BriefIntroduction'] = 'NO'
+			sql = "insert into weibo_user (id, nickname, location, brief_intr, auth, url, viplevel, fans, follows, tweets) values('%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s');" % (dict_user['Id'], dict_user['NickName'], dict_user['Location'], dict_user['BriefIntroduction'], dict_user['Authentication'], dict_user['Url'], int(dict_user['Viplevel']), dict_user['Fans'], dict_user['Follows'], dict_user['Tweets'])
+			self.__insert_sql(sql)
 	def __is_exist(self, sql):
 		self.cursor.execute(sql)
 		results = self.cursor.fetchall()
