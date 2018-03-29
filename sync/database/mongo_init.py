@@ -1,7 +1,7 @@
 # encoding: utf-8
 import time
 from pymongo import MongoClient
-from sync import conf
+import conf
 class mongo_handler:
 	def __init__(self):
 		self.host, self.port, self.user, self.password, self.database, self.type = conf.mongo_init()

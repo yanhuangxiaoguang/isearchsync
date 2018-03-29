@@ -1,7 +1,7 @@
 # encoding: utf-8
 import time, datetime
 import pymysql as mydb
-from sync import conf
+import conf
 class mysql_handler:
 	def __init__(self):
 		self.user, self.password, self.db, self.host, self.port, self.type = conf.mysql_init()
@@ -34,7 +34,7 @@ class mysql_handler:
 		try:
 			self.cursor.execute(sql)
 			self.conn.commit()
-			print 'update_successful: %s' % sql
+			#print 'update_successful: %s' % sql
 		except mydb.Error as e:
 			print
 	def update_node(self, node_ip, node_time, node_state, node_type):
@@ -42,7 +42,7 @@ class mysql_handler:
 		try:
 			self.cursor.execute(sql)
 			self.conn.commit()
-			print 'update node:%s type:%d status successful' % (node_ip, node_type)
+			print '%s update node:%s status successful' % (time.strftime("%Y-%m-%d %H:%M:%S"), node_ip)
 		except mydb.Error as e:
 			print e
 	def update_site(self, count, site_id):
@@ -60,7 +60,7 @@ class mysql_handler:
 		self.__update_same(sql)
 	def update_weibo(self, weibo_id, like_num, transfer_num, comment_num):
 		sql = "update weibo set like_num=%d, transger_num=%d, comment_num=%d where weibo_id=%d " % ( like_num, transfer_num, comment_num, weibo_id)
-		print sql
+		#print sql
 		self.__update_same(sql)
 	def select_topic_list(self):
 		sql = 'SELECT t.id as topic_id,t.topic_in_words as in_words,t.topic_ex_words as ex_words,topic_name as topic_name ,u.id as user_id FROM topic t,user u where t.user_id=u.id and u.is_active=1 and t.status=2'
@@ -119,14 +119,14 @@ class mysql_handler:
 			self.conn.commit()
 			return True
 		except mydb.Error as e:
-			print 'insert error:'+sql
+			#print 'insert error:'+sql
 			print e
 			self.conn.rollback()
 			return False
 	def insert_webpage(self, dict_webpage):
 		sql = '''insert into webpage (title, summ, url, pub_date, crawl_date, site_name, is_read, is_collect, is_push, sensibilities, content, author, section_name, site_type)
 			  '''+ " values('%s','%s','%s','%s','%s','%s',%d, %d, %d, %d,'%s','%s', '%s', %d)" % (dict_webpage['title'], dict_webpage['summ'], dict_webpage['url'], str(dict_webpage['public_time']),str(dict_webpage['crawl_time']), dict_webpage['site_name'], 0, 0, 0, dict_webpage['sensibilities'], dict_webpage['content'], dict_webpage['author'], dict_webpage['section_name'], dict_webpage['site_type'])
-		print sql
+		#print sql
 		self.__insert_sql(sql)
 	def insert_re_topic(self, web_id, topic_id, pub_date, user_id):
 		sql = 'insert into re_web_topic (web_id, topic_id, crawl_date, user_id) values(%d, %d, "%s", %d)' % (web_id, topic_id, pub_date, user_id)
@@ -139,25 +139,25 @@ class mysql_handler:
 			self.__insert_sql(sql)
 	def insert_weibo(self, dict_weibo):
 		sql = "insert into weibo (weibo_id, user_id, nickname, content, pubtime, tools, like_num, transfer_num, comment_num, cooridinates) values('%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s')" % (dict_weibo['id'], dict_weibo['Id'], dict_weibo['NickName'], dict_weibo['Content'], dict_weibo['PubTime'], dict_weibo['Tools'], dict_weibo['Like'], dict_weibo['Transfer'], dict_weibo['Comment'], dict_weibo['Co_oridinates'])
-		print sql
+		#print sql
 		self.__insert_sql(sql)
 	def insert_weibo_comment(self, weibo_id, dict_weibo_comment):
 		if self.has_weibo_comment(weibo_id, dict_weibo_comment):
 			sql = "update weibo_comment set like_num=%d where comment_id='%s' and uid='%s' and comment_str='%s'" % (dict_weibo_comment['like'], weibo_id, dict_weibo_comment['uid'], dict_weibo_comment['comment'])
-			print sql
+			#print sql
 			self.__update_same(sql)
 		else:
 			sql = "insert into weibo_comment (comment_id, name, uid, comment_str, like_num) values ('%s', '%s' , '%s', '%s', %d)" % (weibo_id, dict_weibo_comment['name'], dict_weibo_comment['uid'], dict_weibo_comment['comment'], dict_weibo_comment['like'])
-			print sql
+			#print sql
 			self.__insert_sql(sql)
 	def insert_weibo_transfer(self, weibo_id, dict_weibo_transfer):
 		if self.has_weibo_transfer(weibo_id, dict_weibo_transfer):
 			sql =  "update weibo_transfer set like_num=%d where transfer_id='%s' and uid='%s' and content='%s'" % (dict_weibo_transfer['like'], weibo_id, dict_weibo_transfer['uid'], dict_weibo_transfer['content'])
-			print sql
+			#print sql
 			self.__update_same(sql)
 		else:
 			sql = "insert into weibo_transfer (transfer_id, name, uid, content, like_num) values ('%s', '%s' , '%s', '%s', %d)" % (weibo_id, dict_weibo_transfer['name'], dict_weibo_transfer['uid'], dict_weibo_transfer['content'], dict_weibo_transfer['like'])
-			print sql
+			#print sql
 			self.__insert_sql(sql)
 	def __is_exist(self, sql):
 		self.cursor.execute(sql)
@@ -172,7 +172,7 @@ class mysql_handler:
 		return self.__is_exist(sql)
 	def has_weibo(self, weibo_id):
 		sql = "select * from weibo where weibo_id='%s'" % weibo_id
-		print sql
+		#print sql
 		return self.__is_exist(sql)
 	def has_weibo_transfer(self, weibo_id, dict_weibo_transfer):
 		sql = "select * from weibo_transfer where transfer_id='%s' and uid='%s' and content='%s'" % (weibo_id, dict_weibo_transfer['uid'], dict_weibo_transfer['content'])
@@ -187,5 +187,5 @@ class mysql_handler:
 		self.cursor.close()
 		self.conn.close()
 		
-mysql_conn = mysql_handler()
-mysql_conn.seleet_weibo_comment_num('5183194482-M_FEW5lwtJw')
+# mysql_conn = mysql_handler()
+# mysql_conn.seleet_weibo_comment_num('5183194482-M_FEW5lwtJw')

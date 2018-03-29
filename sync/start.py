@@ -154,7 +154,7 @@ def sync_es_info():
 			handle_response_weibo(weibo_response,topic_id=topic_id, user_id=user_id)
 		except:
 			print "update weibo data error : in_words:%s, sex_words %s " % (str_in_words, str_ex_words)
-		
+		sleep(1)
 
 def close_all():
 	mongo_conn.close()
