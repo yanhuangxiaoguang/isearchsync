@@ -74,6 +74,7 @@ def sent2word(title, content):
 		#print len(newSent)
 		reslut_list.append(newSent)
 	return reslut_list
+
 def classifyWords(wordlist):
 	'''将分词后的词语列表，转变为与位置相关的词典'''
 	word_dict = {}
@@ -128,9 +129,6 @@ def emotion(title, content):
 			sen_word_dict, not_word_dict, degree_word_dict = classifyWords(list_sent[j])
 			score = score_sent(sen_word_dict, not_word_dict, degree_word_dict, len(list_sent[j]))
 			score_list.append(score)
-			#score_all += score
-		#print "allllllllllllllll"
-		#score_all = 0
 		num = len(score_list)
 		if num == 2:
 			score_all = score_list[0]*(1/3) + score_list[1]*(2/3)

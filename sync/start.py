@@ -11,9 +11,8 @@ mysql_conn = mysql_handler()
 redis_conn = redis_handler()
 mongo_conn = mongo_handler()
 esrtf_conn = esrtf_handler()
+
 def update_service():
-	'''3.28微博框架'''
-	'''3.28微博框sdasd架'''
 	'update redis and clawer status'
 	redis_list = redis_conn.update()
 	for i in range(len(redis_list)):
@@ -85,50 +84,58 @@ def handle_response(responses,topic_id, user_id):
 			else:
 				print 'do not have found webpage id, maybe the date Maybe the data is being inserted into the MySQL database, and the database is not refreshed'
 
-def handle_response_weibo(responses,topic_id, user_id):
+
+
+def handle_response_weibo(responses, topic_id, user_id):
 	for hit in responses:
-		if mysql_conn.is_webpage(hit['url']): #Id
-			web_id, web_pub_time = mysql_conn.select_webpage_id(url=hit['url'])
+		if mysql_conn.is_webpage(hit['id']):
+			'''这儿将会把微博的id当做url插入wenpage表'''
+			web_id, web_pub_time = mysql_conn.select_webpage_id(url=hit['id'])
 			if mysql_conn.is_re_webtopic(web_id=web_id, topic_id=topic_id, user_id=user_id):
-				# print "The data is exist，web_id: %d " % web_id
 				pass
 			else:
 				# print 'insert new data  to webpage'
 				mysql_conn.insert_re_topic(web_id=web_id, topic_id=topic_id, pub_date=web_pub_time, user_id=user_id)
-			'''if data_update :
-				update weibo weibo_comment weibo_tranfer
-			else:
-				pass
-			'''
 		else:
 			webpage_dict = {}
-			webpage_dict['url'] = hit['url']
-			webpage_dict['title'] = hit['title']
-			webpage_dict['author'] = hit['author']
-			webpage_dict['content'] = hit['content']
-			webpage_dict['site_name'] = hit['site_name']
-			webpage_dict['site_type'] = hit['site_type']
-			webpage_dict['crawl_time'] = hit['crawl_time']
-			webpage_dict['public_time'] = hit['public_time']
-			webpage_dict['section_name'] = hit['section_name']
-			if not hit['public_time']:
-				webpage_dict['public_time'] = webpage_dict['crawl_time']
-			elif is_a_week(hit['public_time'], hit['crawl_time']):
-				# print 'Published within a week'
-				pass
-			else:
-				print 'Published over than a week'
-				continue
-			webpage_dict['sensibilities'] = analyize.emotion(hit['title'], hit['content'])
-			webpage_dict['summ'] = top_word(hit['content'])
+			webpage_dict['url'] = hit['id']
+			webpage_dict['title'] = u'微博信息'
+			''' 标题未确定'''
+			webpage_dict['author'] = hit['NickName']
+			webpage_dict['content'] = hit['Content']
+			webpage_dict['site_name'] = u'微博'
+			webpage_dict['site_type'] = 3
+			webpage_dict['crawl_time'] = time.strftime("%Y-%m-%d %H:%M:%S")
+			webpage_dict['public_time'] = hit['PubTime']
+			webpage_dict['section_name'] = u'微博'
+			#print 'analyize start'
+			webpage_dict['sensibilities'] = analyize.emotion('null', hit['Content'])
+			''' 标题未确定，以null代替'''
+			webpage_dict['summ'] = top_word(hit['Content'])
+			
 			mysql_conn.insert_webpage(dict_webpage=webpage_dict)
 			'''insert weibo_comment weibo_transfer'''
-			web_id, pub_date_tmp = mysql_conn.select_webpage_id(url=hit['url'])
+			web_id, pub_date_tmp = mysql_conn.select_webpage_id(url=hit['id'])
+			
+			if mysql_conn.has_weibo(hit['id']):
+				mysql_conn.update_weibo(weibo_id=hit['id'], like_num=hit['Like'], transfer_num=hit['Transfer'], comment_num=hit['Comment'])
+			else:
+				mysql_conn.insert_weibo(hit)
 			if web_id:
 				mysql_conn.insert_re_topic(web_id=web_id, topic_id=topic_id, pub_date=pub_date_tmp, user_id=user_id)
 			else:
 				print 'do not have found webpage id, maybe the date Maybe the data is being inserted into the MySQL database, and the database is not refreshed'
-
+				
+		if hit['Transfer'] > 0:
+			if hit['Transfer'] != mysql_conn.seleet_weibo_transfer_num(weibo_id=hit['id']):
+				for transfer_i in range(len(hit['TransferList'])):
+					mysql_conn.insert_weibo_transfer(weibo_id=hit['id'], dict_weibo_transfer=hit['TransferList'][transfer_i])
+				
+		if hit['Comment'] > 0:
+			if hit['Comment'] != mysql_conn.seleet_weibo_comment_num(weibo_id=hit['id']):
+				for comment_i in range(len(hit['CommentsList'])):
+					mysql_conn.insert_weibo_comment(weibo_id=hit['id'], dict_weibo_comment=hit['CommentsList'][comment_i])
+			
 def sync_es_info():
 	topic_list = mysql_conn.select_topic_list()
 	for i in range(len(topic_list)):
@@ -144,11 +151,10 @@ def sync_es_info():
 			
 		weibo_response = esrtf_conn.search_syno(mysql_conn, str_in_words, str_ex_words, key=2, list_fields=["Content"])
 		try:
-			return
 			handle_response_weibo(weibo_response,topic_id=topic_id, user_id=user_id)
 		except:
-			print "handle error: in_words:%s, sex_words %s " % (str_in_words, str_ex_words)
-		return
+			print "update weibo data error : in_words:%s, sex_words %s " % (str_in_words, str_ex_words)
+		
 
 def close_all():
 	mongo_conn.close()

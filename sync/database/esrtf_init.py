@@ -43,9 +43,6 @@ class esrtf_handler:
 		return response
 	def search_syno(self, mysql_conn, topic_in_words, topic_ex_words, key, list_fields=['title', 'content']):
 		list_in = topic_in_words.split(',')
-		#print 'topic in words : %s' % topic_in_words
-		#print 'topic ex words : %s' % topic_ex_words
-		#q = Q("query_string", query='\"%s\"' % list_in[0], fields=['title', 'content'])
 		rule = []
 		for i in range(len(list_in)):
 			q_in = Q("query_string", query='\"%s\"' % list_in[i], fields=list_fields)
